@@ -3,7 +3,6 @@ package mutation
 import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"time"
 )
 
@@ -31,7 +30,6 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 
 				user := model.User{
-					Id:        objectid.New(),
 					FirstName: params.Args["first_name"].(string),
 					LastName:  params.Args["last_name"].(string),
 					Email:     params.Args["email"].(string),
@@ -39,7 +37,9 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 					Created:   time.Now(),
 				}
 
-				return user, nil
+				result, err := model.Create(user)
+				return result, err
+
 			},
 		},
 	},
