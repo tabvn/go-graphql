@@ -37,7 +37,8 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 					Created:   time.Now(),
 				}
 
-				result, err := model.Create(user)
+				result, err := user.Create()
+				
 				return result, err
 
 			},

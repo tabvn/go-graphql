@@ -50,21 +50,21 @@ func (u User) Json() (User, error) {
 	return u, nil
 
 }
-func Create(user User) (User, error) {
+func (u User) Create() (User, error) {
 
 	collection := db.Collection("users")
 
 	id := objectid.New()
 
-	user.Id = string(id.Hex())
+	u.Id = string(id.Hex())
 
 	_, err := collection.InsertOne(context.Background(), bson.NewDocument(
 		bson.EC.ObjectID("_id", id),
-		bson.EC.String("first_name", user.FirstName),
-		bson.EC.String("last_name", user.LastName),
-		bson.EC.String("email", user.Email),
-		bson.EC.String("password", user.Password),
-		bson.EC.Time("created", user.Created),
+		bson.EC.String("first_name", u.FirstName),
+		bson.EC.String("last_name", u.LastName),
+		bson.EC.String("email", u.Email),
+		bson.EC.String("password", u.Password),
+		bson.EC.Time("created", u.Created),
 	))
 	if err != nil {
 		log.Fatal(err)
