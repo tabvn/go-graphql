@@ -69,8 +69,8 @@ func (u User) Create() (User, error) {
 	if err != nil {
 		log.Fatal(err)
 
-		return user, err
+		return u, err
 	}
 
-	return user, nil
+	return u, nil
 }
