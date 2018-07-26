@@ -40,6 +40,9 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				result, err := user.Create()
+				if err != nil {
+					return nil, err
+				}
 
 				return result, err
 
@@ -63,7 +66,7 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 					Type: graphql.NewNonNull(graphql.String),
 				},
 				"password": &graphql.ArgumentConfig{
-					Type: graphql.NewNonNull(graphql.String),
+					Type: graphql.String,
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {

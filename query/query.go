@@ -3,6 +3,7 @@ package query
 import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
+	"github.com/mongodb/mongo-go-driver/bson/objectid"
 )
 
 var Query = graphql.NewObject(
@@ -14,16 +15,22 @@ var Query = graphql.NewObject(
 				Description: "Get user by id",
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
-						Type: graphql.String,
+						Type: graphql.NewNonNull(graphql.String),
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					_, ok := p.Args["id"].(string)
-					if ok {
 
-						return nil, nil
+					id := p.Args["id"].(string)
+
+					userId, e := objectid.FromHex(id)
+
+					if e != nil {
+						return nil, e
 					}
-					return nil, nil
+
+					result, err := model.User{Id: userId}.Load()
+
+					return result, err
 				},
 			},
 
