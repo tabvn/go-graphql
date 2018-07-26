@@ -7,24 +7,25 @@ import (
 	"log"
 	"go-graphql/db"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
-	"github.com/mongodb/mongo-go-driver/bson"
+	"go-graphql/scalar"
 )
 
 type User struct {
-	Id        string    `json:"_id"`
-	Email     string    `json:"email"`
-	Password  string    `json:"password"`
-	FirstName string    `json:"first_name"`
-	LastName  string    `json:"last_name"`
-	Created   time.Time `json:"created"`
+	Id        objectid.ObjectID `json:"_id" bson:"_id"`
+	Email string            `json:"email"`
+	Password  string            `json:"password"`
+	FirstName string            `json:"first_name"`
+	LastName  string            `json:"last_name"`
+	Created   time.Time         `json:"created"`
 }
 
 var UserType = graphql.NewObject(
 	graphql.ObjectConfig{
 		Name: "User",
 		Fields: graphql.Fields{
+
 			"_id": &graphql.Field{
-				Type: graphql.String,
+				Type: scalar.ObjectIdType,
 			},
 			"first_name": &graphql.Field{
 				Type: graphql.String,
@@ -56,16 +57,10 @@ func (u User) Create() (User, error) {
 
 	id := objectid.New()
 
-	u.Id = string(id.Hex())
+	u.Id = id
 
-	_, err := collection.InsertOne(context.Background(), bson.NewDocument(
-		bson.EC.ObjectID("_id", id),
-		bson.EC.String("first_name", u.FirstName),
-		bson.EC.String("last_name", u.LastName),
-		bson.EC.String("email", u.Email),
-		bson.EC.String("password", u.Password),
-		bson.EC.Time("created", u.Created),
-	))
+	_, err := collection.InsertOne(context.Background(), u)
+
 	if err != nil {
 		log.Fatal(err)
 
