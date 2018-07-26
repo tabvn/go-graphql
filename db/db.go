@@ -36,6 +36,17 @@ func Collection(name string) (*mongo.Collection) {
 	if database == nil {
 		Connect()
 	}
-	
+
 	return database.Collection(name)
+}
+
+func Create(table string, data interface{}) (*mongo.InsertOneResult, error) {
+	result, err := Collection(table).InsertOne(context.Background(), data)
+	return result, err
+}
+
+func Update(table string, filter interface{}, update interface{}) (*mongo.UpdateResult, error) {
+	result, err := Collection(table).UpdateOne(context.Background(), filter, update)
+	return result, err
+
 }

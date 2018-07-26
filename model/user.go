@@ -3,20 +3,20 @@ package model
 import (
 	"time"
 	"github.com/graphql-go/graphql"
-	"context"
-	"log"
 	"go-graphql/db"
 	"github.com/mongodb/mongo-go-driver/bson/objectid"
 	"go-graphql/scalar"
+	"github.com/mongodb/mongo-go-driver/bson"
 )
 
 type User struct {
 	Id        objectid.ObjectID `json:"_id" bson:"_id"`
-	Email string            `json:"email"`
-	Password  string            `json:"password"`
-	FirstName string            `json:"first_name"`
-	LastName  string            `json:"last_name"`
-	Created   time.Time         `json:"created"`
+	Email     string            `json:"email" bson:"email"`
+	Password  string            `json:"password" bson:"password"`
+	FirstName string            `json:"first_name" bson:"first_name"`
+	LastName  string            `json:"last_name" bson:"last_name"`
+	Created   time.Time         `json:"created" bson:"created"`
+	Updated   time.Time         `json:"updated" bson:"updated"`
 }
 
 var UserType = graphql.NewObject(
@@ -51,21 +51,34 @@ func (u User) Json() (User, error) {
 	return u, nil
 
 }
-func (u User) Create() (User, error) {
 
-	collection := db.Collection("users")
+func (u User) Create() (User, error) {
 
 	id := objectid.New()
 
 	u.Id = id
 
-	_, err := collection.InsertOne(context.Background(), u)
+	_, err := db.Create("users", u)
 
-	if err != nil {
-		log.Fatal(err)
+	return u, err
+}
 
-		return u, err
+func (u User) Update() (User, error) {
+
+	type Filter struct {
+		Id objectid.ObjectID `bson:"_id"`
 	}
 
-	return u, nil
+	update := bson.NewDocument(
+		bson.EC.SubDocumentFromElements("$set",
+			bson.EC.String("email", u.Email),
+			bson.EC.String("first_name", u.FirstName),
+			bson.EC.String("last_name", u.LastName),
+			bson.EC.String("password", u.Password),
+			bson.EC.Time("updated", time.Now()),
+		))
+
+	_, err := db.Update("users", Filter{Id: u.Id}, update)
+
+	return u, err
 }
