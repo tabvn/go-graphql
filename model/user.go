@@ -113,6 +113,39 @@ func (u User) Update() (User, error) {
 	return u, err
 }
 
+func BsonDocumentToUser(d *bson.Document) (User) {
+
+	u := User{
+
+	}
+
+	u.Id = d.Lookup("_id").ObjectID()
+
+	firstName := d.Lookup("first_name")
+
+	if firstName != nil {
+		u.FirstName = firstName.StringValue()
+	}
+
+	lastName := d.Lookup("last_name")
+
+	if lastName != nil {
+		u.LastName = lastName.StringValue()
+	}
+
+	email := d.Lookup("email")
+	if email != nil {
+		u.Email = email.StringValue()
+	}
+
+	u.Password = ""
+
+	u.Created = d.Lookup("created").DateTime()
+	u.Updated = d.Lookup("updated").DateTime()
+
+	return u
+}
+
 func (u User) Load() (User, error) {
 
 	result := bson.NewDocument()
@@ -127,28 +160,7 @@ func (u User) Load() (User, error) {
 
 		return u, err
 	}
-
-	firstName := result.Lookup("first_name")
-
-	if firstName != nil {
-		u.FirstName = firstName.StringValue()
-	}
-
-	lastName := result.Lookup("last_name")
-
-	if lastName != nil {
-		u.LastName = lastName.StringValue()
-	}
-
-	email := result.Lookup("email")
-	if email != nil {
-		u.Email = email.StringValue()
-	}
-
-	u.Password = ""
-
-	u.Created = result.Lookup("created").DateTime()
-	u.Updated = result.Lookup("updated").DateTime()
+	u = BsonDocumentToUser(result)
 
 	return u, err
 }
@@ -170,6 +182,8 @@ func (u User) validateCreate() (User, error) {
 		return u, err
 	}
 
+	//@todo validate email in database if exist.
+
 	// trim space
 	u.FirstName = strings.TrimSpace(u.FirstName)
 	u.LastName = strings.TrimSpace(u.LastName)
@@ -179,7 +193,7 @@ func (u User) validateCreate() (User, error) {
 		err = errors.New("password is required")
 		return u, err
 	}
-	
+
 	if len(u.Password) < 6 {
 		err = errors.New("password must be of minimum 6 characters length")
 		return u, err

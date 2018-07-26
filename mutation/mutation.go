@@ -40,9 +40,12 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 				}
 
 				result, err := user.Create()
+
 				if err != nil {
 					return nil, err
 				}
+
+				result.Password = ""
 
 				return result, err
 
