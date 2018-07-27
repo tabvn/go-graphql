@@ -4,7 +4,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
 	"errors"
-)
+	)
 
 var Query = graphql.NewObject(
 	graphql.ObjectConfig{
@@ -30,7 +30,7 @@ var Query = graphql.NewObject(
 					}
 
 					result, err := user.Load()
-					
+
 					return result, err
 				},
 			},

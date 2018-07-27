@@ -4,6 +4,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
 	"errors"
+	"fmt"
 )
 
 var Mutation = graphql.NewObject(graphql.ObjectConfig{
@@ -89,6 +90,48 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 					return nil, err
 				}
 				return result, err
+
+			},
+		},
+
+		"login": &graphql.Field{
+			Type:        model.LoginType,
+			Description: "Login",
+			Args: graphql.FieldConfigArgument{
+				"email": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"password": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+
+				email := params.Args["email"].(string)
+				password := params.Args["password"].(string)
+
+				token, user, err := model.LoginUser(email, password)
+
+				fmt.Println("error", token, user, err)
+
+				type UserResult struct {
+					user *model.User
+				}
+
+				type LoginResult struct {
+					*model.Token
+					UserResult `json:"user"`
+				}
+				result := LoginResult{
+					token,
+					UserResult{
+						user: user,
+					},
+				}
+
+				fmt.Println("result", result.user)
+
+				return result, nil
 
 			},
 		},

@@ -9,6 +9,7 @@ import (
 	"errors"
 	"go-graphql/db"
 	"database/sql"
+	"fmt"
 )
 
 type User struct {
@@ -46,6 +47,26 @@ var UserType = graphql.NewObject(
 			},
 			"updated": &graphql.Field{
 				Type: graphql.Int,
+			},
+		},
+	},
+)
+
+var LoginType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "login",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.ID,
+			},
+			"token": &graphql.Field{
+				Type: graphql.String,
+			},
+			"created": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"user": &graphql.Field{
+				Type: UserType,
 			},
 		},
 	},
@@ -125,12 +146,8 @@ func (u *User) Update() (*User, error) {
 	return u, nil
 }
 
-type rowScanner interface {
-	Scan(dest ...interface{}) error
-}
-
 // scanBook reads a book from a sql.Row or sql.Rows
-func scanUser(s rowScanner) (*User, error) {
+func scanUser(s db.RowScanner) (*User, error) {
 	var (
 		id        int64
 		firstName sql.NullString
@@ -191,8 +208,6 @@ func (u *User) validateCreate() (*User, error) {
 		return nil, err
 	}
 
-	//@todo validate email in database if exist.
-
 	count, countErr := db.DB.Count("SELECT COUNT(*) FROM users WHERE email=?", u.Email)
 
 	if countErr != nil {
@@ -218,4 +233,27 @@ func (u *User) validateCreate() (*User, error) {
 	}
 
 	return u, err
+}
+
+func LoginUser(email string, password string) (*Token, *User, error) {
+
+	row := db.DB.QueryRow("SELECT * FROM users WHERE email=?", email)
+
+	user, err := scanUser(row)
+	if err != nil {
+		return nil, nil, err
+	}
+	if user == nil {
+
+		return nil, nil, errors.New("login failure")
+	}
+
+	if !CheckPasswordHash(password, user.Password) {
+		return nil, nil, errors.New("login failure")
+	}
+
+	fmt.Println("Login", user, err)
+
+	return nil, user, nil
+
 }

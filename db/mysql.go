@@ -23,6 +23,10 @@ type MySQLConfig struct {
 	UnixSocket string
 }
 
+type RowScanner interface {
+	Scan(dest ...interface{}) error
+}
+
 func newDatabase() (*Database, error) {
 
 	conn, err := sql.Open("mysql", config.MysqlConnectURL)
@@ -51,6 +55,10 @@ func (db *Database) Close() {
 
 func (db *Database) Query(query string, args interface{}) (*sql.Rows, error) {
 	return DB.conn.Query(query, args)
+}
+func (db *Database) QueryRow(query string, args ...interface{}) (*sql.Row) {
+
+	return DB.conn.QueryRow(query, args...)
 }
 
 func (db *Database) Prepare(query string) (*sql.Stmt, error) {
