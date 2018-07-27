@@ -25,8 +25,12 @@ var Query = graphql.NewObject(
 						return nil, errors.New("invalid id")
 					}
 
-					result, err := model.User{Id: int64(id)}.Load()
+					user := &model.User{
+						Id: int64(id),
+					}
 
+					result, err := user.Load()
+					
 					return result, err
 				},
 			},

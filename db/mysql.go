@@ -23,47 +23,50 @@ type MySQLConfig struct {
 	UnixSocket string
 }
 
-func newDatabase() (Database, error) {
+func newDatabase() (*Database, error) {
 
 	conn, err := sql.Open("mysql", config.MysqlConnectURL)
 
 	if err != nil {
-		return DB, fmt.Errorf("mysql: could not get a connection: %v", err)
+		return nil, err
 	}
 
 	if err := conn.Ping(); err != nil {
 		conn.Close()
-		return DB, fmt.Errorf("mysql: could not establish a good connection: %v", err)
+		return nil, err
 	}
 
-	DB.conn = conn
+	db := &Database{
+		conn: conn,
+	}
+
+	DB = *db
+
+	return db, err
+}
+
+func (db *Database) Close() {
+	DB.conn.Close()
+}
+
+func (db *Database) Query(query string, args interface{}) (*sql.Rows, error) {
+	return DB.conn.Query(query, args)
+}
+
+func (db *Database) Prepare(query string) (*sql.Stmt, error) {
+	return DB.conn.Prepare(query)
+}
+
+func InitDatabase() (*Database, error) {
+	DB, err := newDatabase()
+	if err != nil {
+		return nil, err
+	}
 
 	return DB, err
 }
 
-func (db Database) Close() {
-	db.conn.Close()
-}
-
-func (db Database) Query(query string, args interface{}) (*sql.Rows, error) {
-	return DB.conn.Query(query, args)
-}
-
-func (db Database) Prepare(query string) (*sql.Stmt, error) {
-	return DB.conn.Prepare(query)
-}
-
-func InitDatabase() (Database) {
-	DB, err := newDatabase()
-	if err != nil {
-		fmt.Errorf("error connect to database: %v", err)
-
-	}
-
-	return DB
-}
-
-func (db Database) Insert(query string, args ...interface{}) (int64, error) {
+func (db *Database) Insert(query string, args ...interface{}) (int64, error) {
 
 	stmt, _ := DB.conn.Prepare(query)
 
@@ -88,7 +91,7 @@ func (db Database) Insert(query string, args ...interface{}) (int64, error) {
 
 }
 
-func (db Database) Update(query string, args ...interface{}) (int64, error) {
+func (db *Database) Update(query string, args ...interface{}) (int64, error) {
 
 	fmt.Println("Update", query, args)
 
@@ -116,7 +119,7 @@ func (db Database) Update(query string, args ...interface{}) (int64, error) {
 
 }
 
-func (db Database) Get(table string, id int64) (*sql.Row, error) {
+func (db *Database) Get(table string, id int64) (*sql.Row, error) {
 
 	query := "SELECT * FROM " +
 		table +
