@@ -193,6 +193,15 @@ func (u *User) validateCreate() (*User, error) {
 
 	//@todo validate email in database if exist.
 
+	count, countErr := db.DB.Count("SELECT COUNT(*) FROM users WHERE email=?", u.Email)
+
+	if countErr != nil {
+		return nil, errors.New("unable validate email")
+	}
+	if count > 0 {
+		return nil, errors.New("email already exist")
+	}
+
 	// trim space
 	u.FirstName = strings.TrimSpace(u.FirstName)
 	u.LastName = strings.TrimSpace(u.LastName)

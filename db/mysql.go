@@ -119,6 +119,20 @@ func (db *Database) Update(query string, args ...interface{}) (int64, error) {
 
 }
 
+func (db *Database) Count(query string, args ...interface{}) (int, error) {
+
+	var count int
+	row := DB.conn.QueryRow(query, args...)
+
+	err := row.Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (db *Database) Get(table string, id int64) (*sql.Row, error) {
 
 	query := "SELECT * FROM " +
