@@ -9,7 +9,6 @@ import (
 	"errors"
 	"go-graphql/db"
 	"database/sql"
-	"fmt"
 	"github.com/satori/go.uuid"
 )
 
@@ -262,16 +261,28 @@ func LoginUser(email string, password string) (*Token, *User, error) {
 		Created: currentTime.Unix(),
 	}
 
-
-
 	r, createTokenErr := t.Create()
 
 	if createTokenErr != nil {
 		return nil, nil, createTokenErr
 	}
 
-	fmt.Println("token", t)
-
 	return r, user, nil
 
+}
+
+func LogoutUser(token string) (bool, error) {
+
+	var success = false
+
+	_, err := db.DB.Delete("DELETE FROM tokens where token =?", token)
+
+	if err != nil {
+
+		return false, err
+	} else {
+		success = true
+	}
+
+	return success, nil
 }

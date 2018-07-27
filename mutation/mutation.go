@@ -126,5 +126,39 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 
 			},
 		},
+		"logout": &graphql.Field{
+			Type: graphql.NewObject(
+				graphql.ObjectConfig{
+					Name: "Logout",
+					Fields: graphql.Fields{
+						"success": &graphql.Field{
+							Type: graphql.Boolean,
+						},
+					},
+				},
+			),
+			Description: "Login",
+			Args: graphql.FieldConfigArgument{
+				"token": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+
+				token := params.Args["token"].(string)
+
+				success, err := model.LogoutUser(token)
+
+				if err != nil {
+					return nil, errors.New("logout error")
+				}
+				result := map[string]interface{}{
+					"success": success,
+				}
+
+				return result, err
+
+			},
+		},
 	},
 })
