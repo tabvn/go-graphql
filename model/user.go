@@ -3,25 +3,21 @@ package model
 import (
 	"time"
 	"github.com/graphql-go/graphql"
-	"go-graphql/db"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
-	"go-graphql/scalar"
-	"github.com/mongodb/mongo-go-driver/bson"
 	"golang.org/x/crypto/bcrypt"
-	"context"
 	"strings"
 	"go-graphql/helper"
 	"errors"
+	"go-graphql/db"
 )
 
 type User struct {
-	Id        objectid.ObjectID `json:"_id" bson:"_id"`
-	Email     string            `json:"email" bson:"email"`
-	Password  string            `json:"password" bson:"password"`
-	FirstName string            `json:"first_name" bson:"first_name"`
-	LastName  string            `json:"last_name" bson:"last_name"`
-	Created   time.Time         `json:"created" bson:"created"`
-	Updated   time.Time         `json:"updated" bson:"updated"`
+	Id        int64  `json:"id"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Created   int64  `json:"created"`
+	Updated   int64  `json:"updated"`
 }
 
 var UserType = graphql.NewObject(
@@ -29,8 +25,8 @@ var UserType = graphql.NewObject(
 		Name: "User",
 		Fields: graphql.Fields{
 
-			"_id": &graphql.Field{
-				Type: scalar.ObjectIdType,
+			"id": &graphql.Field{
+				Type: graphql.ID,
 			},
 			"first_name": &graphql.Field{
 				Type: graphql.String,
@@ -73,10 +69,6 @@ func (u User) Create() (User, error) {
 		return u, validateError
 	}
 
-	id := objectid.New()
-
-	u.Id = id
-
 	// generate password
 	password, e := HashPassword(u.Password)
 	u.Password = password
@@ -85,84 +77,56 @@ func (u User) Create() (User, error) {
 		return u, e
 	}
 
-	_, err := db.Create("users", u)
+	query := `INSERT INTO users (first_name, last_name, email, password, created, updated) VALUES (?, ?, ?, ?, ?, ?)`
+	currentTime := time.Now()
+	u.Created = currentTime.Unix()
+	u.Updated = currentTime.Unix()
+
+	result, err := db.DB.Insert(query, u.FirstName, u.LastName, u.Email, u.Password, u.Created, u.Updated)
+
+	if err != nil {
+		return u, err
+	}
+
+	u.Id = result
+	u.Password = ""
 
 	return u, err
 }
 
 func (u User) Update() (User, error) {
 
-	type Filter struct {
-		Id objectid.ObjectID `bson:"_id"`
-	}
+	currentTime := time.Now()
+	u.Updated = currentTime.Unix()
 
-	if u.Password != "" {
+	if u.Password == "" {
+		query := `UPDATE users SET first_name=?, last_name=?, email=?, updated=? WHERE id = ?`
+		_, err := db.DB.Update(query, u.FirstName, u.LastName, u.Email, u.Updated, u.Id)
 
-	}
+		if err != nil {
+			return u, err
+		}
+	} else {
+		query := `UPDATE users SET first_name=?, last_name=?, email=?, password=?, updated=? WHERE id = ?`
+		password, err := HashPassword(u.Password)
+		if err != nil {
+			return u, err
+		}
+		_, updateErr := db.DB.Update(query, u.FirstName, u.LastName, u.Email, password, u.Updated, u.Id)
 
-	update := bson.NewDocument(
-		bson.EC.SubDocumentFromElements("$set",
-			bson.EC.String("email", u.Email),
-			bson.EC.String("first_name", u.FirstName),
-			bson.EC.String("last_name", u.LastName),
-			bson.EC.Time("updated", time.Now()),
-		))
-
-	_, err := db.Update("users", Filter{Id: u.Id}, update)
-
-	return u, err
-}
-
-func BsonDocumentToUser(d *bson.Document) (User) {
-
-	u := User{
-
-	}
-
-	u.Id = d.Lookup("_id").ObjectID()
-
-	firstName := d.Lookup("first_name")
-
-	if firstName != nil {
-		u.FirstName = firstName.StringValue()
-	}
-
-	lastName := d.Lookup("last_name")
-
-	if lastName != nil {
-		u.LastName = lastName.StringValue()
-	}
-
-	email := d.Lookup("email")
-	if email != nil {
-		u.Email = email.StringValue()
+		if updateErr != nil {
+			return u, err
+		}
 	}
 
 	u.Password = ""
 
-	u.Created = d.Lookup("created").DateTime()
-	u.Updated = d.Lookup("updated").DateTime()
-
-	return u
+	return u, nil
 }
 
 func (u User) Load() (User, error) {
 
-	result := bson.NewDocument()
-
-	filter := bson.NewDocument(
-		bson.EC.ObjectID("_id", u.Id),
-	)
-
-	err := db.Collection("users").FindOne(context.Background(), filter).Decode(result)
-
-	if err != nil {
-
-		return u, err
-	}
-	u = BsonDocumentToUser(result)
-
-	return u, err
+	return u, nil
 }
 
 func (u User) validateCreate() (User, error) {

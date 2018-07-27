@@ -3,8 +3,6 @@ package mutation
 import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
-	"time"
-	"github.com/mongodb/mongo-go-driver/bson/objectid"
 )
 
 var Mutation = graphql.NewObject(graphql.ObjectConfig{
@@ -35,8 +33,6 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 					LastName:  params.Args["last_name"].(string),
 					Email:     params.Args["email"].(string),
 					Password:  params.Args["password"].(string),
-					Created:   time.Now(),
-					Updated:   time.Now(),
 				}
 
 				result, err := user.Create()
@@ -56,8 +52,8 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 			Type:        model.UserType,
 			Description: "Update user",
 			Args: graphql.FieldConfigArgument{
-				"_id": &graphql.ArgumentConfig{
-					Type: graphql.NewNonNull(graphql.String),
+				"id": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.ID),
 				},
 				"first_name": &graphql.ArgumentConfig{
 					Type: graphql.String,
@@ -74,16 +70,15 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 
-				id, err := objectid.FromHex(params.Args["_id"].(string))
+				//id := params.Args["id"]
 
 				user := model.User{
-					Id:        id,
+					Id:        1,
 					FirstName: params.Args["first_name"].(string),
 					LastName:  params.Args["last_name"].(string),
 					Email:     params.Args["email"].(string),
 					Password:  params.Args["password"].(string),
-					Created:   time.Now(),
-					Updated:   time.Now(),
+
 				}
 
 				result, err := user.Update()

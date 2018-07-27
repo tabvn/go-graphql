@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-graphql/schema"
+	"go-graphql/db"
 )
 
 func getBodyFromRequest(r *http.Request) (string, error) {
@@ -31,8 +32,14 @@ func getBodyFromRequest(r *http.Request) (string, error) {
 	return body, nil
 }
 
+func Setup() {
+
+	db.InitDatabase()
+}
+
 func main() {
 
+	Setup()
 	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
 		body, error := getBodyFromRequest(r)
 		if error != nil {
