@@ -90,8 +90,7 @@ func (db Database) Insert(query string, args ...interface{}) (int64, error) {
 
 func (db Database) Update(query string, args ...interface{}) (int64, error) {
 
-
-	fmt.Println("Update" ,query, args)
+	fmt.Println("Update", query, args)
 
 	stmt, _ := DB.conn.Prepare(query)
 
@@ -114,5 +113,16 @@ func (db Database) Update(query string, args ...interface{}) (int64, error) {
 	}
 
 	return lastInsertID, nil
+
+}
+
+func (db Database) Get(table string, id int64) (*sql.Row, error) {
+
+	query := "SELECT * FROM " +
+		table +
+		" WHERE id = ?"
+	stmt, _ := DB.conn.Prepare(query)
+	row := stmt.QueryRow(id)
+	return row, nil
 
 }

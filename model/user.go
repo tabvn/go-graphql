@@ -8,6 +8,7 @@ import (
 	"go-graphql/helper"
 	"errors"
 	"go-graphql/db"
+	"database/sql"
 )
 
 type User struct {
@@ -124,9 +125,48 @@ func (u User) Update() (User, error) {
 	return u, nil
 }
 
+type rowScanner interface {
+	Scan(dest ...interface{}) error
+}
+
+// scanBook reads a book from a sql.Row or sql.Rows
+func scanUser(s rowScanner) (*User, error) {
+	var (
+		id         int64
+		first_name sql.NullString
+		last_name  sql.NullString
+		email      sql.NullString
+		password   sql.NullString
+		created    sql.NullInt64
+		updated    sql.NullInt64
+	)
+	if err := s.Scan(&id, &first_name, &last_name, &email, &password,
+		&created, &updated); err != nil {
+		return nil, err
+	}
+
+	user := &User{
+		Id:        id,
+		FirstName: first_name.String,
+		LastName:  last_name.String,
+		Email:     email.String,
+		Password:  password.String,
+		Created:   created.Int64,
+		Updated:   updated.Int64,
+	}
+	return user, nil
+}
+
 func (u User) Load() (User, error) {
 
-	return u, nil
+	row, err := db.DB.Get("users", u.Id)
+	if err != nil {
+		return u, err
+	}
+
+	user, err := scanUser(row)
+
+	return *user, nil
 }
 
 func (u User) validateCreate() (User, error) {
