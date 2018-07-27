@@ -3,6 +3,7 @@ package mutation
 import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
+	"errors"
 )
 
 var Mutation = graphql.NewObject(graphql.ObjectConfig{
@@ -53,7 +54,7 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 			Description: "Update user",
 			Args: graphql.FieldConfigArgument{
 				"id": &graphql.ArgumentConfig{
-					Type: graphql.NewNonNull(graphql.ID),
+					Type: graphql.NewNonNull(graphql.Int),
 				},
 				"first_name": &graphql.ArgumentConfig{
 					Type: graphql.String,
@@ -70,19 +71,23 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 
-				//id := params.Args["id"]
-
+				id, ok := params.Args["id"].(int)
+				if !ok {
+					return nil, errors.New("invalid id")
+				}
 				user := model.User{
-					Id:        1,
+					Id:        int64(id),
 					FirstName: params.Args["first_name"].(string),
 					LastName:  params.Args["last_name"].(string),
 					Email:     params.Args["email"].(string),
 					Password:  params.Args["password"].(string),
-
 				}
 
 				result, err := user.Update()
 
+				if err != nil {
+					return nil, err
+				}
 				return result, err
 
 			},

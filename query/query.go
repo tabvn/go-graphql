@@ -3,6 +3,7 @@ package query
 import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
+	"errors"
 )
 
 var Query = graphql.NewObject(
@@ -14,14 +15,17 @@ var Query = graphql.NewObject(
 				Description: "Get user by id",
 				Args: graphql.FieldConfigArgument{
 					"id": &graphql.ArgumentConfig{
-						Type: graphql.NewNonNull(graphql.String),
+						Type: graphql.NewNonNull(graphql.Int),
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-					id := p.Args["id"].(int64)
+					id, ok := p.Args["id"].(int)
+					if !ok {
+						return nil, errors.New("invalid id")
+					}
 
-					result, err := model.User{Id: id}.Load()
+					result, err := model.User{Id: int64(id)}.Load()
 
 					return result, err
 				},
