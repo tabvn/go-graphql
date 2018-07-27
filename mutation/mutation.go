@@ -4,7 +4,6 @@ import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
 	"errors"
-	"fmt"
 )
 
 var Mutation = graphql.NewObject(graphql.ObjectConfig{
@@ -30,7 +29,7 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 
-				user := model.User{
+				user := &model.User{
 					FirstName: params.Args["first_name"].(string),
 					LastName:  params.Args["last_name"].(string),
 					Email:     params.Args["email"].(string),
@@ -112,26 +111,18 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 
 				token, user, err := model.LoginUser(email, password)
 
-				fmt.Println("error", token, user, err)
-
-				type UserResult struct {
-					user *model.User
+				if err != nil {
+					return nil, err
 				}
 
-				type LoginResult struct {
-					*model.Token
-					UserResult `json:"user"`
-				}
-				result := LoginResult{
-					token,
-					UserResult{
-						user: user,
-					},
+				r := map[string]interface{}{
+					"id":      token.Id,
+					"token":   token.Token,
+					"created": token.Created,
+					"user":    user,
 				}
 
-				fmt.Println("result", result.user)
-
-				return result, nil
+				return r, nil
 
 			},
 		},

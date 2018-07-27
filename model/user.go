@@ -10,6 +10,7 @@ import (
 	"go-graphql/db"
 	"database/sql"
 	"fmt"
+	"github.com/satori/go.uuid"
 )
 
 type User struct {
@@ -252,8 +253,25 @@ func LoginUser(email string, password string) (*Token, *User, error) {
 		return nil, nil, errors.New("login failure")
 	}
 
-	fmt.Println("Login", user, err)
+	currentTime := time.Now()
 
-	return nil, user, nil
+	t := &Token{
+		Id:      0,
+		UserId:  user.Id,
+		Token:   uuid.Must(uuid.NewV4()).String(),
+		Created: currentTime.Unix(),
+	}
+
+
+
+	r, createTokenErr := t.Create()
+
+	if createTokenErr != nil {
+		return nil, nil, createTokenErr
+	}
+
+	fmt.Println("token", t)
+
+	return r, user, nil
 
 }
