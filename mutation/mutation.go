@@ -93,6 +93,35 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 			},
 		},
 
+		"deleteUser": &graphql.Field{
+			Type:        graphql.Boolean,
+			Description: "Delete user",
+			Args: graphql.FieldConfigArgument{
+				"id": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.Int),
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+
+				id, ok := params.Args["id"].(int)
+				if !ok {
+					return nil, errors.New("invalid id")
+				}
+
+				user := model.User{
+					Id: int64(id),
+				}
+
+				result, err := user.Delete()
+
+				if err != nil {
+					return nil, errors.New("an error deleting user or not found")
+				}
+				return result, err
+
+			},
+		},
+
 		"login": &graphql.Field{
 			Type:        model.LoginType,
 			Description: "Login",

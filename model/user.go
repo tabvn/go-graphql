@@ -191,6 +191,16 @@ func (u *User) Load() (*User, error) {
 	return user, err
 }
 
+func (u *User) Delete() (bool, error) {
+
+	_, err := db.DB.Delete("DELETE FROM users where id=?", u.Id)
+
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 func (u *User) validateCreate() (*User, error) {
 
 	var err error = nil

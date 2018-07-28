@@ -156,20 +156,20 @@ func (db *Database) Delete(query string, args ...interface{}) (int64, error) {
 
 	r, err := stmt.Exec(args...)
 	if err != nil {
-		return 0, fmt.Errorf("mysql: could not execute statement: %v", err)
+		return 0, fmt.Errorf("could not execute statement: %v", err)
 	}
 	rowsAffected, err := r.RowsAffected()
 
 	if err != nil {
-		return 0, fmt.Errorf("mysql: could not get rows affected: %v", err)
+		return 0, fmt.Errorf("could not get rows affected: %v", err)
 	} else if rowsAffected != 1 {
-		return 0, fmt.Errorf("mysql: expected 1 row affected, got %d", rowsAffected)
+		return 0, fmt.Errorf("expected 1 row affected, got %d", rowsAffected)
 	}
 
 	lastInsertID, err := r.LastInsertId()
 
 	if err != nil {
-		return 0, fmt.Errorf("mysql: could not get last insert ID: %v", err)
+		return 0, fmt.Errorf("could not get last insert ID: %v", err)
 	}
 
 	return lastInsertID, nil
