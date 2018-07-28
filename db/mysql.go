@@ -149,6 +149,17 @@ func (db *Database) Get(table string, id int64) (*sql.Row, error) {
 	return row, nil
 
 }
+func (db *Database) FindOne(query string, args ...interface{}) (*sql.Row, error) {
+
+	stmt, err := DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	row := stmt.QueryRow(args...)
+	return row, nil
+}
 
 func (db *Database) Delete(query string, args ...interface{}) (int64, error) {
 

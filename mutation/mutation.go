@@ -4,6 +4,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
 	"errors"
+	"fmt"
 )
 
 var Mutation = graphql.NewObject(graphql.ObjectConfig{
@@ -102,6 +103,10 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 				},
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+
+				currentUser := params.Context.Value("user")
+
+				fmt.Println("User", currentUser)
 
 				id, ok := params.Args["id"].(int)
 				if !ok {

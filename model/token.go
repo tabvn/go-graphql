@@ -7,7 +7,7 @@ import (
 	"go-graphql/db"
 	"database/sql"
 	"github.com/satori/go.uuid"
-	)
+)
 
 type Token struct {
 	Id      int64  `json:"id"`
@@ -37,7 +37,6 @@ var TokenType = graphql.NewObject(
 )
 
 func (token *Token) Create() (*Token, error) {
-
 
 	if token.Token == "" {
 		token.Token = uuid.Must(uuid.NewV4()).String()

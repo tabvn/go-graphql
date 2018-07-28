@@ -9,6 +9,8 @@ import (
 	"errors"
 	"go-graphql/config"
 	"go-graphql/dev"
+	"context"
+	"go-graphql/model"
 )
 
 type params struct {
@@ -53,12 +55,28 @@ func graphqlHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, error := getBodyFromRequest(r)
-	if error != nil {
-		http.Error(w, error.Error(), http.StatusBadRequest)
-	}
-	result := schema.ExecuteQuery(p.Query, p.OperationName, schema.Schema)
+	p, err := getBodyFromRequest(r)
 
+	if err != nil {
+		http.Error(w, "Something went wrong", http.StatusBadRequest)
+
+		return
+	}
+
+	var auth = r.Header.Get("Authorization")
+
+	if len(auth) == 0 {
+		auth = r.URL.Query().Get("auth")
+	}
+
+	println("auth", auth)
+
+	_, user, _ := model.VerifyToken(auth)
+	ctx := context.WithValue(context.Background(), "user", user)
+
+	result := schema.ExecuteQuery(ctx, p.Query, p.OperationName, schema.Schema)
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(result)
 }
 
