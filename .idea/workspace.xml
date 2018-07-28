@@ -53,8 +53,8 @@
       <file leaf-file-name="user.go" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/model/user.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="122">
-              <caret line="165" column="4" selection-start-line="165" selection-start-column="4" selection-end-line="165" selection-end-column="4" />
+            <state relative-caret-position="-529">
+              <caret line="135" column="18" selection-start-line="135" selection-start-column="8" selection-end-line="135" selection-end-column="18" />
             </state>
           </provider>
         </entry>
@@ -266,7 +266,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1680" height="982" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" sideWeight="0.4983165" visible="true" weight="0.26862028" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.3299435" />
@@ -274,9 +273,9 @@
       <window_info anchor="right" id="Database" order="3" />
       <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="9" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.4993895" visible="true" weight="0.32881355" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4993895" weight="0.32881355" />
       <window_info id="Structure" order="1" sideWeight="0.5016835" side_tool="true" weight="0.25641027" />
-      <window_info anchor="bottom" id="Terminal" order="8" sideWeight="0.4993895" weight="0.13107345" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="8" sideWeight="0.4993895" visible="true" weight="0.13107345" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -632,8 +631,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/model/user.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="122">
-          <caret line="165" column="4" selection-start-line="165" selection-start-column="4" selection-end-line="165" selection-end-column="4" />
+        <state relative-caret-position="-529">
+          <caret line="135" column="18" selection-start-line="135" selection-start-column="8" selection-end-line="135" selection-end-column="18" />
         </state>
       </provider>
     </entry>
