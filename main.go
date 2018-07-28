@@ -7,8 +7,8 @@ import (
 	"go-graphql/schema"
 	"go-graphql/db"
 	"errors"
-	"go-graphql/dev"
 	"go-graphql/config"
+	"go-graphql/dev"
 )
 
 type params struct {
@@ -49,26 +49,34 @@ func Setup() {
 	}
 
 }
+func graphqlHandler(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method == "GET" {
+		if !config.Production {
+
+			// Render GraphIQL
+			w.Write(dev.Content)
+			return
+		}
+		content := []byte (`I'm Go!`)
+		w.Write(content)
+		return
+	}
+
+	body, error := getBodyFromRequest(r)
+	if error != nil {
+		http.Error(w, error.Error(), http.StatusBadRequest)
+	}
+	result := schema.ExecuteQuery(body, schema.Schema)
+
+	json.NewEncoder(w).Encode(result)
+}
 
 func main() {
 
 	Setup()
-
-	// GraphIQL development router handler
-	if !config.Production {
-		http.HandleFunc("/", dev.ServeGraphiQL)
-	}
-
 	// Router api graphQL handler
-	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
-		body, error := getBodyFromRequest(r)
-		if error != nil {
-			http.Error(w, error.Error(), http.StatusBadRequest)
-		}
-		result := schema.ExecuteQuery(body, schema.Schema)
-
-		json.NewEncoder(w).Encode(result)
-	})
+	http.HandleFunc("/api", graphqlHandler)
 
 	fmt.Println("Server is running on port 3001")
 	http.ListenAndServe(":3001", nil)
