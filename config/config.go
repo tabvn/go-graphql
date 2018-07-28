@@ -1,3 +1,4 @@
 package config
 
-var MysqlConnectURL = "root:root@/go"
+var MysqlConnectURL = "root:@/go"
+var Production = false

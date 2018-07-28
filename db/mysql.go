@@ -101,7 +101,7 @@ func (db *Database) Insert(query string, args ...interface{}) (int64, error) {
 
 func (db *Database) Update(query string, args ...interface{}) (int64, error) {
 
-	fmt.Println("Update", query, args)
+
 
 	stmt, _ := DB.conn.Prepare(query)
 

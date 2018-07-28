@@ -7,26 +7,34 @@ import (
 	"go-graphql/schema"
 	"go-graphql/db"
 	"errors"
+	"go-graphql/dev"
+	"go-graphql/config"
 )
+
+type params struct {
+	Query         string      `json:"query"`
+	OperationName string      `json:"operationName,omitempty"`
+	Variables     interface{} `json:"variables,omitempty"`
+}
 
 func getBodyFromRequest(r *http.Request) (string, error) {
 
 	var body string
 
-	var params struct {
-		Query         string                 `json:"query"`
-		OperationName string                 `json:"operationName"`
-		Variables     map[string]interface{} `json:"variables"`
-	}
-
 	if r.Method == "GET" {
 		body = r.URL.Query().Get("query")
+
 	}
+
 	if r.Method == "POST" {
-		if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
+		p := &params{
+			Variables: nil,
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(p); err != nil {
 			return body, err
 		}
-		body = params.Query
+		body = p.Query
 
 	}
 
@@ -45,6 +53,13 @@ func Setup() {
 func main() {
 
 	Setup()
+
+	// GraphIQL development router handler
+	if !config.Production {
+		http.HandleFunc("/", dev.ServeGraphiQL)
+	}
+
+	// Router api graphQL handler
 	http.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
 		body, error := getBodyFromRequest(r)
 		if error != nil {
