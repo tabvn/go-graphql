@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go-graphql/schema"
 	"go-graphql/db"
+	"errors"
 )
 
 func getBodyFromRequest(r *http.Request) (string, error) {
@@ -34,7 +35,11 @@ func getBodyFromRequest(r *http.Request) (string, error) {
 
 func Setup() {
 
-	db.InitDatabase()
+	_, err := db.InitDatabase()
+	if err != nil {
+		panic(errors.New("can not connect to database"))
+	}
+
 }
 
 func main() {

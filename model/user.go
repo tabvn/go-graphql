@@ -9,6 +9,7 @@ import (
 	"errors"
 	"go-graphql/db"
 	"database/sql"
+	"github.com/satori/go.uuid"
 )
 
 type User struct {
@@ -42,10 +43,30 @@ var UserType = graphql.NewObject(
 				Type: graphql.String,
 			},
 			"created": &graphql.Field{
-				Type: graphql.DateTime,
+				Type: graphql.Int,
 			},
 			"updated": &graphql.Field{
-				Type: graphql.DateTime,
+				Type: graphql.Int,
+			},
+		},
+	},
+)
+
+var LoginType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "login",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.ID,
+			},
+			"token": &graphql.Field{
+				Type: graphql.String,
+			},
+			"created": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"user": &graphql.Field{
+				Type: UserType,
 			},
 		},
 	},
@@ -61,13 +82,13 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func (u User) Create() (User, error) {
+func (u *User) Create() (*User, error) {
 
 	u, validateError := u.validateCreate()
 
 	if validateError != nil {
 
-		return u, validateError
+		return nil, validateError
 	}
 
 	// generate password
@@ -75,7 +96,7 @@ func (u User) Create() (User, error) {
 	u.Password = password
 
 	if e != nil {
-		return u, e
+		return nil, e
 	}
 
 	query := `INSERT INTO users (first_name, last_name, email, password, created, updated) VALUES (?, ?, ?, ?, ?, ?)`
@@ -86,7 +107,7 @@ func (u User) Create() (User, error) {
 	result, err := db.DB.Insert(query, u.FirstName, u.LastName, u.Email, u.Password, u.Created, u.Updated)
 
 	if err != nil {
-		return u, err
+		return nil, err
 	}
 
 	u.Id = result
@@ -95,7 +116,7 @@ func (u User) Create() (User, error) {
 	return u, err
 }
 
-func (u User) Update() (User, error) {
+func (u *User) Update() (*User, error) {
 
 	currentTime := time.Now()
 	u.Updated = currentTime.Unix()
@@ -105,18 +126,18 @@ func (u User) Update() (User, error) {
 		_, err := db.DB.Update(query, u.FirstName, u.LastName, u.Email, u.Updated, u.Id)
 
 		if err != nil {
-			return u, err
+			return nil, err
 		}
 	} else {
 		query := `UPDATE users SET first_name=?, last_name=?, email=?, password=?, updated=? WHERE id = ?`
 		password, err := HashPassword(u.Password)
 		if err != nil {
-			return u, err
+			return nil, err
 		}
 		_, updateErr := db.DB.Update(query, u.FirstName, u.LastName, u.Email, password, u.Updated, u.Id)
 
 		if updateErr != nil {
-			return u, err
+			return nil, err
 		}
 	}
 
@@ -125,68 +146,76 @@ func (u User) Update() (User, error) {
 	return u, nil
 }
 
-type rowScanner interface {
-	Scan(dest ...interface{}) error
-}
-
 // scanBook reads a book from a sql.Row or sql.Rows
-func scanUser(s rowScanner) (*User, error) {
+func scanUser(s db.RowScanner) (*User, error) {
 	var (
-		id         int64
-		first_name sql.NullString
-		last_name  sql.NullString
-		email      sql.NullString
-		password   sql.NullString
-		created    sql.NullInt64
-		updated    sql.NullInt64
+		id        int64
+		firstName sql.NullString
+		lastName  sql.NullString
+		email     sql.NullString
+		password  sql.NullString
+		created   sql.NullInt64
+		updated   sql.NullInt64
 	)
-	if err := s.Scan(&id, &first_name, &last_name, &email, &password,
+	if err := s.Scan(&id, &firstName, &lastName, &email, &password,
 		&created, &updated); err != nil {
 		return nil, err
 	}
 
 	user := &User{
 		Id:        id,
-		FirstName: first_name.String,
-		LastName:  last_name.String,
+		FirstName: firstName.String,
+		LastName:  lastName.String,
 		Email:     email.String,
 		Password:  password.String,
 		Created:   created.Int64,
 		Updated:   updated.Int64,
 	}
+
 	return user, nil
 }
 
-func (u User) Load() (User, error) {
+func (u *User) Load() (*User, error) {
 
 	row, err := db.DB.Get("users", u.Id)
 	if err != nil {
-		return u, err
+		return nil, err
 	}
 
 	user, err := scanUser(row)
 
-	return *user, nil
+	if user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	return user, err
 }
 
-func (u User) validateCreate() (User, error) {
+func (u *User) validateCreate() (*User, error) {
 
 	var err error = nil
 
 	// Email validation
 	if u.Email == "" {
 		err = errors.New("email is required")
-		return u, err
+		return nil, err
 	}
 
 	u.Email = strings.ToLower(u.Email)
 	err = helper.ValidateEmail(u.Email)
 
 	if err != nil {
-		return u, err
+		return nil, err
 	}
 
-	//@todo validate email in database if exist.
+	count, countErr := db.DB.Count("SELECT COUNT(*) FROM users WHERE email=?", u.Email)
+
+	if countErr != nil {
+		return nil, errors.New("unable validate email")
+	}
+	if count > 0 {
+		return nil, errors.New("email already exist")
+	}
 
 	// trim space
 	u.FirstName = strings.TrimSpace(u.FirstName)
@@ -195,13 +224,65 @@ func (u User) validateCreate() (User, error) {
 	// Password validation
 	if u.Password == "" {
 		err = errors.New("password is required")
-		return u, err
+		return nil, err
 	}
 
 	if len(u.Password) < 6 {
 		err = errors.New("password must be of minimum 6 characters length")
-		return u, err
+		return nil, err
 	}
 
 	return u, err
+}
+
+func LoginUser(email string, password string) (*Token, *User, error) {
+
+	row := db.DB.QueryRow("SELECT * FROM users WHERE email=?", email)
+
+	user, err := scanUser(row)
+	if err != nil {
+		return nil, nil, err
+	}
+	if user == nil {
+
+		return nil, nil, errors.New("login failure")
+	}
+
+	if !CheckPasswordHash(password, user.Password) {
+		return nil, nil, errors.New("login failure")
+	}
+
+	currentTime := time.Now()
+
+	t := &Token{
+		Id:      0,
+		UserId:  user.Id,
+		Token:   uuid.Must(uuid.NewV4()).String(),
+		Created: currentTime.Unix(),
+	}
+
+	r, createTokenErr := t.Create()
+
+	if createTokenErr != nil {
+		return nil, nil, createTokenErr
+	}
+
+	return r, user, nil
+
+}
+
+func LogoutUser(token string) (bool, error) {
+
+	var success = false
+
+	_, err := db.DB.Delete("DELETE FROM tokens where token =?", token)
+
+	if err != nil {
+
+		return false, err
+	} else {
+		success = true
+	}
+
+	return success, nil
 }

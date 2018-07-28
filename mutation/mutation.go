@@ -29,7 +29,7 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 			},
 			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
 
-				user := model.User{
+				user := &model.User{
 					FirstName: params.Args["first_name"].(string),
 					LastName:  params.Args["last_name"].(string),
 					Email:     params.Args["email"].(string),
@@ -88,6 +88,74 @@ var Mutation = graphql.NewObject(graphql.ObjectConfig{
 				if err != nil {
 					return nil, err
 				}
+				return result, err
+
+			},
+		},
+
+		"login": &graphql.Field{
+			Type:        model.LoginType,
+			Description: "Login",
+			Args: graphql.FieldConfigArgument{
+				"email": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+				"password": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+
+				email := params.Args["email"].(string)
+				password := params.Args["password"].(string)
+
+				token, user, err := model.LoginUser(email, password)
+
+				if err != nil {
+					return nil, err
+				}
+
+				r := map[string]interface{}{
+					"id":      token.Id,
+					"token":   token.Token,
+					"created": token.Created,
+					"user":    user,
+				}
+
+				return r, nil
+
+			},
+		},
+		"logout": &graphql.Field{
+			Type: graphql.NewObject(
+				graphql.ObjectConfig{
+					Name: "Logout",
+					Fields: graphql.Fields{
+						"success": &graphql.Field{
+							Type: graphql.Boolean,
+						},
+					},
+				},
+			),
+			Description: "Login",
+			Args: graphql.FieldConfigArgument{
+				"token": &graphql.ArgumentConfig{
+					Type: graphql.NewNonNull(graphql.String),
+				},
+			},
+			Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+
+				token := params.Args["token"].(string)
+
+				success, err := model.LogoutUser(token)
+
+				if err != nil {
+					return nil, errors.New("logout error")
+				}
+				result := map[string]interface{}{
+					"success": success,
+				}
+
 				return result, err
 
 			},

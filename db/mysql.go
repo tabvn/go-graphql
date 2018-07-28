@@ -23,47 +23,58 @@ type MySQLConfig struct {
 	UnixSocket string
 }
 
-func newDatabase() (Database, error) {
+type RowScanner interface {
+	Scan(dest ...interface{}) error
+}
+
+func newDatabase() (*Database, error) {
 
 	conn, err := sql.Open("mysql", config.MysqlConnectURL)
 
 	if err != nil {
-		return DB, fmt.Errorf("mysql: could not get a connection: %v", err)
+		return nil, err
 	}
 
 	if err := conn.Ping(); err != nil {
 		conn.Close()
-		return DB, fmt.Errorf("mysql: could not establish a good connection: %v", err)
+		return nil, err
 	}
 
-	DB.conn = conn
+	db := &Database{
+		conn: conn,
+	}
+
+	DB = *db
+
+	return db, err
+}
+
+func (db *Database) Close() {
+	DB.conn.Close()
+}
+
+func (db *Database) Query(query string, args interface{}) (*sql.Rows, error) {
+	return DB.conn.Query(query, args)
+}
+func (db *Database) QueryRow(query string, args ...interface{}) (*sql.Row) {
+
+	return DB.conn.QueryRow(query, args...)
+}
+
+func (db *Database) Prepare(query string) (*sql.Stmt, error) {
+	return DB.conn.Prepare(query)
+}
+
+func InitDatabase() (*Database, error) {
+	DB, err := newDatabase()
+	if err != nil {
+		return nil, err
+	}
 
 	return DB, err
 }
 
-func (db Database) Close() {
-	db.conn.Close()
-}
-
-func (db Database) Query(query string, args interface{}) (*sql.Rows, error) {
-	return DB.conn.Query(query, args)
-}
-
-func (db Database) Prepare(query string) (*sql.Stmt, error) {
-	return DB.conn.Prepare(query)
-}
-
-func InitDatabase() (Database) {
-	DB, err := newDatabase()
-	if err != nil {
-		fmt.Errorf("error connect to database: %v", err)
-
-	}
-
-	return DB
-}
-
-func (db Database) Insert(query string, args ...interface{}) (int64, error) {
+func (db *Database) Insert(query string, args ...interface{}) (int64, error) {
 
 	stmt, _ := DB.conn.Prepare(query)
 
@@ -88,7 +99,7 @@ func (db Database) Insert(query string, args ...interface{}) (int64, error) {
 
 }
 
-func (db Database) Update(query string, args ...interface{}) (int64, error) {
+func (db *Database) Update(query string, args ...interface{}) (int64, error) {
 
 	fmt.Println("Update", query, args)
 
@@ -116,7 +127,21 @@ func (db Database) Update(query string, args ...interface{}) (int64, error) {
 
 }
 
-func (db Database) Get(table string, id int64) (*sql.Row, error) {
+func (db *Database) Count(query string, args ...interface{}) (int, error) {
+
+	var count int
+	row := DB.conn.QueryRow(query, args...)
+
+	err := row.Scan(&count)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (db *Database) Get(table string, id int64) (*sql.Row, error) {
 
 	query := "SELECT * FROM " +
 		table +
@@ -124,5 +149,31 @@ func (db Database) Get(table string, id int64) (*sql.Row, error) {
 	stmt, _ := DB.conn.Prepare(query)
 	row := stmt.QueryRow(id)
 	return row, nil
+
+}
+
+func (db *Database) Delete(query string, args ...interface{}) (int64, error) {
+
+	stmt, _ := DB.conn.Prepare(query)
+
+	r, err := stmt.Exec(args...)
+	if err != nil {
+		return 0, fmt.Errorf("mysql: could not execute statement: %v", err)
+	}
+	rowsAffected, err := r.RowsAffected()
+
+	if err != nil {
+		return 0, fmt.Errorf("mysql: could not get rows affected: %v", err)
+	} else if rowsAffected != 1 {
+		return 0, fmt.Errorf("mysql: expected 1 row affected, got %d", rowsAffected)
+	}
+
+	lastInsertID, err := r.LastInsertId()
+
+	if err != nil {
+		return 0, fmt.Errorf("mysql: could not get last insert ID: %v", err)
+	}
+
+	return lastInsertID, nil
 
 }
