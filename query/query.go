@@ -4,6 +4,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"go-graphql/model"
 	"errors"
+	"fmt"
 )
 
 var Query = graphql.NewObject(
@@ -54,6 +55,10 @@ var Query = graphql.NewObject(
 					},
 				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+
+					auth := params.Context.Value("auth")
+
+					fmt.Println("Auth", auth)
 
 					limit := params.Args["limit"].(int)
 					skip := params.Args["skip"].(int)
