@@ -17,28 +17,19 @@ type params struct {
 	Variables     interface{} `json:"variables,omitempty"`
 }
 
-func getBodyFromRequest(r *http.Request) (string, error) {
-
-	var body string
-
-	if r.Method == "GET" {
-		body = r.URL.Query().Get("query")
-
+func getBodyFromRequest(r *http.Request) (*params, error) {
+	p := &params{
+		Variables: nil,
 	}
 
 	if r.Method == "POST" {
-		p := &params{
-			Variables: nil,
-		}
 
 		if err := json.NewDecoder(r.Body).Decode(p); err != nil {
-			return body, err
+			return nil, err
 		}
-		body = p.Query
-
 	}
 
-	return body, nil
+	return p, nil
 }
 
 func Setup() {
@@ -53,7 +44,6 @@ func graphqlHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "GET" {
 		if !config.Production {
-
 			// Render GraphIQL
 			w.Write(dev.Content)
 			return
@@ -63,11 +53,11 @@ func graphqlHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body, error := getBodyFromRequest(r)
+	p, error := getBodyFromRequest(r)
 	if error != nil {
 		http.Error(w, error.Error(), http.StatusBadRequest)
 	}
-	result := schema.ExecuteQuery(body, schema.Schema)
+	result := schema.ExecuteQuery(p.Query, p.OperationName, schema.Schema)
 
 	json.NewEncoder(w).Encode(result)
 }

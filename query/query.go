@@ -35,7 +35,7 @@ var Query = graphql.NewObject(
 						return nil, err
 					}
 					result.Password = ""
-					
+
 					return result, err
 				},
 			},
@@ -43,8 +43,40 @@ var Query = graphql.NewObject(
 			"users": &graphql.Field{
 				Type:        graphql.NewList(model.UserType),
 				Description: "Get user list",
+				Args: graphql.FieldConfigArgument{
+					"limit": &graphql.ArgumentConfig{
+						Type:         graphql.Int,
+						DefaultValue: 50,
+					},
+					"skip": &graphql.ArgumentConfig{
+						Type:         graphql.Int,
+						DefaultValue: 0,
+					},
+				},
 				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
-					return nil, nil
+
+					limit := params.Args["limit"].(int)
+					skip := params.Args["skip"].(int)
+
+					users, err := model.Users(limit, skip)
+
+					if err != nil {
+						return nil, err
+					}
+					return users, err
+				},
+			},
+			"countUsers": &graphql.Field{
+				Type:        graphql.Int,
+				Description: "Get user list",
+				Resolve: func(params graphql.ResolveParams) (interface{}, error) {
+
+					count, err := model.CountUsers()
+
+					if err != nil {
+						return nil, err
+					}
+					return count, err
 				},
 			},
 		},

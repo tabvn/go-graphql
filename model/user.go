@@ -10,6 +10,7 @@ import (
 	"go-graphql/db"
 	"database/sql"
 	"github.com/satori/go.uuid"
+	"fmt"
 )
 
 type User struct {
@@ -285,4 +286,40 @@ func LogoutUser(token string) (bool, error) {
 	}
 
 	return success, nil
+}
+
+func Users(limit int, skip int) ([]*User, error) {
+
+	rows, err := db.DB.List("SELECT * FROM users ORDER BY created DESC LIMIT ? OFFSET ?", limit, skip)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var users []*User
+
+	for rows.Next() {
+		user, err := scanUser(rows)
+
+		if err != nil {
+			return nil, fmt.Errorf("mysql: could not read row: %v", err)
+		}
+
+		user.Password = ""
+		users = append(users, user)
+
+	}
+
+	return users, nil
+}
+
+func CountUsers() (int, error) {
+
+	count, err := db.DB.Count("SELECT COUNT(*) FROM users")
+
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }

@@ -5,7 +5,7 @@ var Content = []byte(`
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>GraphiQL</title>
+  <title>Go GraphiQL</title>
   <meta name="robots" content="noindex" />
   <meta name="referrer" content="origin" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />

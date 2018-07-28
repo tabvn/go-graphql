@@ -76,7 +76,7 @@ func InitDatabase() (*Database, error) {
 
 func (db *Database) Insert(query string, args ...interface{}) (int64, error) {
 
-	stmt, _ := DB.conn.Prepare(query)
+	stmt, _ := DB.Prepare(query)
 
 	r, err := stmt.Exec(args...)
 	if err != nil {
@@ -100,8 +100,6 @@ func (db *Database) Insert(query string, args ...interface{}) (int64, error) {
 }
 
 func (db *Database) Update(query string, args ...interface{}) (int64, error) {
-
-
 
 	stmt, _ := DB.conn.Prepare(query)
 
@@ -175,5 +173,19 @@ func (db *Database) Delete(query string, args ...interface{}) (int64, error) {
 	}
 
 	return lastInsertID, nil
+
+}
+
+func (db *Database) List(query string, args ...interface{}) (*sql.Rows, error) {
+
+	stmt, err := DB.Prepare(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := stmt.Query(args...)
+
+	return rows, err
 
 }
