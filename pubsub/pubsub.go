@@ -3,7 +3,11 @@ package pubsub
 import (
 	"github.com/gorilla/websocket"
 	"fmt"
+	"encoding/json"
 )
+
+var PUBLISH = "publish"
+var SUBSCRIBE = "subscribe"
 
 type PubSub struct {
 	Clients       [] Client
@@ -16,9 +20,9 @@ type Client struct {
 }
 
 type Message struct {
-	Topic   string
-	Action  string
-	Message string
+	Topic   string          `json:"topic"`
+	Action  string          `json:"action"`
+	Message json.RawMessage `json:"message"`
 }
 
 type Subscription struct {
@@ -35,13 +39,32 @@ func (p *PubSub) AddClient(client Client) (*PubSub) {
 	return p
 }
 
-func (p *PubSub) HandleReceivedMessage(client Client, messageType int, message []byte) (*PubSub) {
+func (p *PubSub) HandleReceivedMessage(client *Client, messageType int, message []byte) (*PubSub) {
 
-	fmt.Printf("Received message %d %s %s", messageType, message, client.Id)
+	var m Message
 
-	for _, c := range p.Clients {
+	if err := json.Unmarshal(message, &m); err != nil {
+		// this is not type of PubSub message so we do not do anything.
+		fmt.Println("an error", err)
+		return p
+	}
 
-		c.Conn.WriteMessage(messageType, message)
+	switch m.Action {
+
+	case PUBLISH:
+
+		p.publish(m.Topic, m.Message, nil)
+
+		break
+
+	case SUBSCRIBE:
+
+		p.Subscribe(m.Topic, client)
+
+		break
+
+	default:
+		break
 	}
 
 	return p
@@ -93,10 +116,11 @@ func (p *PubSub) publish(topic string, message []byte, excludeClient *Client) (*
 
 	for _, sub := range subscriptions {
 
-		if excludeClient != nil && sub.Client.Id != excludeClient.Id {
+		if excludeClient != nil {
 
-			// send message
-			sub.Client.send(1, message)
+			if sub.Client.Id != excludeClient.Id {
+				sub.Client.send(1, message)
+			}
 
 		} else {
 			sub.Client.send(1, message)

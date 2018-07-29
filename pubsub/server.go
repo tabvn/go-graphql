@@ -41,12 +41,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("recv: %s, clients: %d", message, len(ps.Clients))
 
-		ps.HandleReceivedMessage(client, mt, message)
-
-		msg := map[string]interface{}{
-			"message": "Hello there",
-		}
-		err = c.WriteJSON(msg)
+		ps.HandleReceivedMessage(&client, mt, message)
 
 		if err != nil {
 			log.Println("write:", err)
