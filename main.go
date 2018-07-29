@@ -11,6 +11,7 @@ import (
 	"go-graphql/dev"
 	"context"
 	"go-graphql/model"
+	"go-graphql/pubsub"
 )
 
 type params struct {
@@ -85,6 +86,7 @@ func main() {
 	Setup()
 	// Router api graphQL handler
 	http.HandleFunc("/api", graphqlHandler)
+	http.HandleFunc("/ws", pubsub.WebSocketHandler)
 
 	fmt.Println("Server is running on port 3001")
 	http.ListenAndServe(":3001", nil)
