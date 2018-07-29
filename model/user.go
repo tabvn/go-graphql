@@ -205,33 +205,36 @@ func (u *User) Delete() (bool, error) {
 	return true, nil
 }
 
-func VerifyToken(token string) (*Token, *User, error) {
+func VerifyToken(token string) (*Auth, error) {
 
 	if token == "" {
 
-		return nil, nil, nil
+		return nil, nil
 	}
 
 	row, err := db.DB.FindOne("SELECT * FROM tokens WHERE token=?", token)
 
 	if err != nil {
-		return nil, nil, errors.New("invalid token")
+		return nil, errors.New("invalid token")
 	}
 
 	t, err := scanToken(row)
 
 	if err != nil {
-		return nil, nil, errors.New("invalid token")
+		return nil, errors.New("invalid token")
 	}
 
 	var user = &User{Id: t.UserId}
 
 	u, err := user.Load()
+
 	if err != nil {
-		return nil, nil, errors.New("invalid token")
+		return nil, errors.New("invalid token")
 	}
 
-	return t, u, err
+	auth := &Auth{t, u}
+
+	return auth, err
 
 }
 func (u *User) validateCreate() (*User, error) {

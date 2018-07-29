@@ -70,10 +70,8 @@ func graphqlHandler(w http.ResponseWriter, r *http.Request) {
 		auth = r.URL.Query().Get("auth")
 	}
 
-	println("auth", auth)
-
-	_, user, _ := model.VerifyToken(auth)
-	ctx := context.WithValue(context.Background(), "user", user)
+	authentication, _ := model.VerifyToken(auth)
+	ctx := context.WithValue(context.Background(), "auth", authentication)
 
 	result := schema.ExecuteQuery(ctx, p.Query, p.OperationName, schema.Schema)
 

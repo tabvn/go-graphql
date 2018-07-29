@@ -15,6 +15,10 @@ type Token struct {
 	Token   string `json:"token"`
 	Created int64  `json:"created"`
 }
+type Auth struct {
+	*Token
+	*User
+}
 
 var TokenType = graphql.NewObject(
 	graphql.ObjectConfig{
