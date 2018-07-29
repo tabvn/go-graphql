@@ -2,7 +2,6 @@ package pubsub
 
 import (
 	"github.com/gorilla/websocket"
-	"fmt"
 	"encoding/json"
 )
 
@@ -39,13 +38,35 @@ func (p *PubSub) AddClient(client Client) (*PubSub) {
 	return p
 }
 
+func (p *PubSub) RemoveClient(client Client) (*PubSub) {
+
+	// remove client's subscriptions
+	for i := 0; i < len(p.Subscriptions); i++ {
+
+		if client.Id == p.Subscriptions[i].Client.Id {
+			p.Subscriptions = append(p.Subscriptions[:i], p.Subscriptions[i+1:]...)
+
+		}
+	}
+
+	// remove client
+	for i := 0; i < len(p.Clients); i++ {
+
+		if client.Id == p.Clients[i].Id {
+			p.Clients = append(p.Clients[:i], p.Clients[i+1:]...)
+
+		}
+	}
+
+	return p
+}
+
 func (p *PubSub) HandleReceivedMessage(client *Client, messageType int, message []byte) (*PubSub) {
 
 	var m Message
 
 	if err := json.Unmarshal(message, &m); err != nil {
 		// this is not type of PubSub message so we do not do anything.
-		fmt.Println("an error", err)
 		return p
 	}
 
@@ -53,7 +74,18 @@ func (p *PubSub) HandleReceivedMessage(client *Client, messageType int, message 
 
 	case PUBLISH:
 
-		p.publish(m.Topic, m.Message, nil)
+		var payload = map[string]interface{}{
+			"topic":   m.Topic,
+			"message": m.Message,
+		}
+
+		sendPayload, err := json.Marshal(payload)
+
+		if err != nil {
+			break
+		}
+
+		p.publish(m.Topic, sendPayload, nil)
 
 		break
 
